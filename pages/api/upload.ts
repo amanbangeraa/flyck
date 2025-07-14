@@ -21,10 +21,9 @@ export default async function handler(
     file.on('data', (d: Buffer) => chunks.push(d));
     file.on('end', () => {
       const buffer = Buffer.concat(chunks);
-      // Add name and type properties for Vercel Blob SDK compatibility
-      (buffer as any).name = info.filename;
-      (buffer as any).type = info.mimeType;
-      files.push(buffer);
+      // Create a real File object for Vercel Blob SDK compatibility
+      const fileObj = new File([buffer], info.filename, { type: info.mimeType });
+      files.push(fileObj);
     });
   });
   bb.on('field', (name, val) => {
@@ -35,7 +34,7 @@ export default async function handler(
       let slides = await getSlides(displayId);
       for (const file of files) {
         try {
-          console.log('Uploading', (file as any).name, (file as any).length || (file as any).size);
+          console.log('Uploading', file.name, file.size);
           const url = await uploadImage(file);
           console.log('Uploaded', url);
           slides.push({ url, uploadedAt: new Date().toISOString() });
