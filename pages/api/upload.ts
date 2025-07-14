@@ -31,7 +31,7 @@ export default async function handler(
   });
   bb.on('finish', async () => {
     for (const displayId of displays) {
-      let slides = await getSlides(displayId);
+      let slides = (await getSlides(displayId)).map(s => ({ url: s.url, uploaded_at: s.uploadedAt }));
       for (const file of files) {
         try {
           console.log('Uploading', file.name, file.size);
@@ -43,7 +43,7 @@ export default async function handler(
           console.error('Upload error:', e);
         }
       }
-      await setSlides(displayId, slides); // slides now uses { url, uploaded_at }
+      await setSlides(displayId, slides);
       await broadcast(displayId);
     }
     res.status(200).json({ ok: true });
