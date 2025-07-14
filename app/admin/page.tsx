@@ -1,7 +1,9 @@
 'use client';
 
-import { useRef, useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { DndProvider, useDrag, useDrop } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 
 function CloudArrowUpIcon(props: any) {
   return (
@@ -44,6 +46,116 @@ async function uploadSlides(formData: FormData) {
 
 const DISPLAY_IDS = Array.from({ length: 8 }, (_, i) => `disp${i + 1}`);
 
+function SlideManager() {
+  const [selectedDisp, setSelectedDisp] = useState(DISPLAY_IDS[0]);
+  const [slides, setSlides] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [reordering, setReordering] = useState(false);
+  const [currentIdx, setCurrentIdx] = useState(0);
+
+  // Fetch slides for selected display
+  useEffect(() => {
+    if (!selectedDisp) return;
+    setLoading(true);
+    fetch(`/api/slides?disp=${selectedDisp}`)
+      .then(res => res.json())
+      .then(data => { setSlides(data || []); setLoading(false); });
+  }, [selectedDisp]);
+
+  // Synchronized slideshow index
+  useEffect(() => {
+    if (!slides.length) return;
+    const getCurrentSlideIdx = (slides: any[]) => {
+      const now = Date.now();
+      const durations = slides.map(s => s.duration || 10000);
+      const total = durations.reduce((a, b) => a + b, 0);
+      const elapsed = (now) % total;
+      let acc = 0;
+      for (let i = 0; i < durations.length; i++) {
+        acc += durations[i];
+        if (elapsed < acc) return i;
+      }
+      return 0;
+    };
+    const updateIdx = () => setCurrentIdx(getCurrentSlideIdx(slides));
+    updateIdx();
+    const interval = setInterval(updateIdx, 250);
+    return () => clearInterval(interval);
+  }, [slides]);
+
+  // Delete slide
+  const handleDelete = async (url: string) => {
+    await fetch(`/api/slides?disp=${selectedDisp}&url=${encodeURIComponent(url)}`, { method: 'DELETE' });
+    setSlides(slides => slides.filter(s => s.url !== url));
+  };
+
+  // Drag-and-drop reordering
+  const moveSlide = (from: number, to: number) => {
+    setSlides(slides => {
+      const updated = [...slides];
+      const [moved] = updated.splice(from, 1);
+      updated.splice(to, 0, moved);
+      return updated;
+    });
+    setReordering(true);
+  };
+  const saveOrder = async () => {
+    await fetch(`/api/slides?disp=${selectedDisp}&order=${slides.map(s => s.id).join(',')}`, { method: 'PATCH' });
+    setReordering(false);
+  };
+
+  // Drag-and-drop hooks
+  const SlideItem = ({ slide, idx, move }: any) => {
+    const ref = useRef<HTMLDivElement>(null);
+    const [, drop] = useDrop({
+      accept: 'slide',
+      hover(item: any) {
+        if (item.idx !== idx) move(item.idx, idx);
+        item.idx = idx;
+      },
+    });
+    const [{ isDragging }, drag] = useDrag({
+      type: 'slide',
+      item: { idx },
+      collect: monitor => ({ isDragging: monitor.isDragging() }),
+    });
+    drag(drop(ref));
+    return (
+      <div ref={ref} className={`flex items-center gap-3 p-2 rounded-lg border ${isDragging ? 'bg-blue-100' : 'bg-white'} ${currentIdx === idx ? 'ring-2 ring-blue-500' : ''}`}
+        style={{ opacity: isDragging ? 0.5 : 1 }}>
+        <img src={slide.url} alt="slide" className="w-16 h-16 object-cover rounded border" />
+        <div className="flex-1">
+          <div className="text-xs text-blue-900 font-semibold">{slide.url.split('/').pop()}</div>
+          <div className="text-xs text-blue-700">{((slide.duration || 10000) / 1000).toFixed(1)}s</div>
+        </div>
+        <button onClick={() => handleDelete(slide.url)} className="px-2 py-1 bg-red-500 text-white rounded text-xs font-bold">Delete</button>
+      </div>
+    );
+  };
+
+  return (
+    <div className="bg-white/90 rounded-2xl shadow-lg p-6 border border-blue-100 mt-10">
+      <div className="flex items-center gap-4 mb-4">
+        <label className="font-semibold text-blue-900">Monitor Display:</label>
+        <select value={selectedDisp} onChange={e => setSelectedDisp(e.target.value)} className="border rounded px-2 py-1">
+          {DISPLAY_IDS.map(id => <option key={id} value={id}>{id}</option>)}
+        </select>
+        {reordering && <button onClick={saveOrder} className="ml-auto px-3 py-1 bg-blue-600 text-white rounded">Save Order</button>}
+      </div>
+      {loading ? <Spinner /> : (
+        <DndProvider backend={HTML5Backend}>
+          <div className="space-y-2">
+            {slides.map((slide, i) => (
+              <SlideItem key={slide.id} slide={slide} idx={i} move={moveSlide} />
+            ))}
+          </div>
+        </DndProvider>
+      )}
+      <div className="text-xs text-blue-500 mt-2">Current slide is highlighted. Drag to reorder, click delete to remove.</div>
+    </div>
+  );
+}
+
 export default function AdminPage() {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -53,6 +165,7 @@ export default function AdminPage() {
   const [dragActive, setDragActive] = useState(false);
   const [previews, setPreviews] = useState<string[]>([]);
   const [durations, setDurations] = useState<number[]>([]);
+  const [commonDuration, setCommonDuration] = useState(10000);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && localStorage.getItem('isLoggedIn') !== 'true') {
@@ -79,6 +192,11 @@ export default function AdminPage() {
 
   const handleDurationChange = (idx: number, value: number) => {
     setDurations((prev) => prev.map((d, i) => (i === idx ? value : d)));
+  };
+
+  const handleCommonDurationChange = (value: number) => {
+    setCommonDuration(value);
+    setDurations((prev) => prev.map(() => value));
   };
 
   const handleRemovePreview = (idx: number) => {
@@ -165,6 +283,22 @@ export default function AdminPage() {
           onSubmit={handleUpload}
         >
           <div>
+            {/* Common duration slider, only show if more than one image */}
+            {previews.length > 1 && (
+              <div className="mb-4 flex items-center gap-4">
+                <label className="font-medium text-blue-900 text-sm">All slides duration:</label>
+                <input
+                  type="range"
+                  min={1000}
+                  max={60000}
+                  step={1000}
+                  value={commonDuration}
+                  onChange={e => handleCommonDurationChange(Number(e.target.value))}
+                  className="w-48"
+                />
+                <span className="text-blue-700 text-sm font-mono">{(commonDuration / 1000).toFixed(1)}s</span>
+              </div>
+            )}
             <label
               htmlFor="file-upload"
               className={`flex flex-col items-center justify-center border-2 border-dashed rounded-2xl h-52 cursor-pointer transition-all duration-200 ${
@@ -255,6 +389,7 @@ export default function AdminPage() {
             {uploading ? 'Uploading...' : 'Upload Slides'}
           </button>
         </form>
+        <SlideManager />
       </main>
     </div>
   );
