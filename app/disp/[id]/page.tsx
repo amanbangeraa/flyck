@@ -35,6 +35,23 @@ function useSlides(id: string) {
   return { slides, fetchSlides };
 }
 
+// Use a fixed start time (e.g., Unix epoch)
+const SLIDESHOW_START = 0;
+
+function getCurrentSlideIdx(slides: { duration?: number }[]) {
+  if (!slides.length) return 0;
+  const now = Date.now();
+  const durations = slides.map(s => s.duration || 10000);
+  const total = durations.reduce((a, b) => a + b, 0);
+  const elapsed = (now - SLIDESHOW_START) % total;
+  let acc = 0;
+  for (let i = 0; i < durations.length; i++) {
+    acc += durations[i];
+    if (elapsed < acc) return i;
+  }
+  return 0;
+}
+
 export default function Slideshow({ params }: { params: { id: string } }) {
   const { id } = params;
   const { slides, fetchSlides } = useSlides(id);
@@ -42,17 +59,19 @@ export default function Slideshow({ params }: { params: { id: string } }) {
   const [loading, setLoading] = useState(true);
   const timer = useRef<NodeJS.Timeout | null>(null);
 
+  // Synchronized slideshow logic
   useEffect(() => {
     if (!slides.length) return;
-    timer.current && clearInterval(timer.current);
+    const updateIdx = () => setIdx(getCurrentSlideIdx(slides));
+    updateIdx();
+    const interval = setInterval(updateIdx, 250); // update 4x/sec for smoothness
+    return () => clearInterval(interval);
+  }, [slides]);
+
+  // Reset to first slide when slides change
+  useEffect(() => {
     setIdx(0);
-    timer.current = setInterval(() => {
-      setIdx((i) => (i + 1) % slides.length);
-    }, slides[idx]?.duration || 10000);
-    return () => {
-      timer.current && clearInterval(timer.current);
-    };
-  }, [slides, idx]);
+  }, [slides]);
 
   useEffect(() => {
     const es = new EventSource(`/api/stream?disp=${id}`);
@@ -99,6 +118,8 @@ export default function Slideshow({ params }: { params: { id: string } }) {
         onError={() => setLoading(false)}
       />
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-black/60 text-white px-5 py-2 rounded-full text-lg font-semibold shadow-lg flex items-center gap-4">
+        <span>Slide {idx + 1} / {slides.length}</span>
+        <span className="text-xs text-blue-200">{((slides[idx]?.duration || 10000) / 1000).toFixed(1)}s</span>
       </div>
     </div>
   );
