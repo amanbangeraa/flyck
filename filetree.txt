@@ -1,0 +1,26 @@
+flyck/
+├ app/
+│ ├ layout.tsx
+│ ├ page.tsx # admin dashboard
+│ └ disp/
+│   └ [id]/
+│     ├ page.tsx # slideshow viewer
+│     └ sw.ts # service‑worker source
+├ lib/
+│ ├ kv.ts # KV helpers
+│ ├ blob.ts # Blob helpers
+│ └ sse.ts # openChannel / broadcast hub
+├ pages/
+│ └ api/
+│   ├ upload.ts # POST image(s) + displays
+│   ├ disp.ts # GET ?id=disp1 returns slides[]
+│   ├ stream.ts # GET SSE ?disp=disp1
+│   ├ heartbeat.ts # POST heartbeat
+│   └ status.ts # GET all heartbeats (admin monitor)
+├ public/
+│ └ fallback.jpg
+├ styles/
+│ └ globals.css
+├ tailwind.config.js
+├ .env.example
+└ package.json 
