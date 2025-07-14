@@ -11,7 +11,7 @@ function Spinner() {
 }
 
 function useSlides(id: string) {
-  const [slides, setSlides] = useState<{ url: string; uploadedAt: string }[]>([]);
+  const [slides, setSlides] = useState<{ url: string; uploadedAt: string; duration?: number }[]>([]);
   // Expose a refetch function
   const fetchSlides = async () => {
     const res = await fetch(`/api/disp?id=${id}`);
