@@ -184,12 +184,7 @@ function UploadSlidesPage(props: any) {
 
   return (
     <div className="bg-white/90 rounded-2xl shadow-lg p-6 border border-blue-100 mt-10">
-      <div className="flex items-center gap-4 mb-4">
-        <label className="font-semibold text-blue-900">Monitor Display:</label>
-        <select value={selected[0]} onChange={e => setSelected([e.target.value])} className="border rounded px-2 py-1">
-          {DISPLAY_IDS.map(id => <option key={id} value={id}>{id}</option>)}
-        </select>
-      </div>
+      {/* Monitor Display dropdown removed */}
       <form className="space-y-12 bg-white/90 p-10 rounded-3xl shadow-2xl border border-blue-100" onSubmit={handleUpload}>
         <h2 className="text-xl font-bold text-blue-900 mb-6">Upload Slides</h2>
         {/* Common duration slider, only show if more than one image */}
@@ -208,40 +203,40 @@ function UploadSlidesPage(props: any) {
             <span className="text-blue-700 text-sm font-mono">{(commonDuration / 1000).toFixed(1)}s</span>
           </div>
         )}
-        <label
-          htmlFor="file-upload"
-          className={`flex flex-col items-center justify-center border-2 border-dashed rounded-2xl h-52 cursor-pointer transition-all duration-200 ${
-            dragActive ? 'border-blue-500 bg-blue-100/60 scale-105' : 'border-blue-200 bg-blue-50/60 hover:bg-blue-100/40'
-          }`}
-          onDragEnter={handleDrag}
-          onDragOver={handleDrag}
-          onDragLeave={handleDrag}
-          onDrop={handleDrop}
-        >
-          <input
-            ref={fileRef}
-            id="file-upload"
-            type="file"
-            accept="image/*"
-            multiple
-            className="hidden"
-            onChange={handleInputChange}
-          />
-          <CloudArrowUpIcon className="w-12 h-12 text-blue-400 mb-2" />
-          <span className="text-blue-700 font-medium">
-            {previews.length === 0
-              ? 'Drag & drop images here, or click to select'
-              : `${previews.length} image(s) selected`}
-          </span>
-          {previews.length > 0 && (
-            <div className="grid grid-cols-4 gap-3 mt-4 w-full">
-              {previews.map((src, i) => (
-                <div key={i} className="relative group">
-                  <img
-                    src={src}
-                    alt="preview"
-                    className="h-20 w-20 object-cover rounded-lg border border-blue-200 shadow-sm transition-transform duration-200 group-hover:scale-105"
-                  />
+            <label
+              htmlFor="file-upload"
+              className={`flex flex-col items-center justify-center border-2 border-dashed rounded-2xl h-52 cursor-pointer transition-all duration-200 ${
+                dragActive ? 'border-blue-500 bg-blue-100/60 scale-105' : 'border-blue-200 bg-blue-50/60 hover:bg-blue-100/40'
+              }`}
+              onDragEnter={handleDrag}
+              onDragOver={handleDrag}
+              onDragLeave={handleDrag}
+              onDrop={handleDrop}
+            >
+              <input
+                ref={fileRef}
+                id="file-upload"
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={handleInputChange}
+              />
+              <CloudArrowUpIcon className="w-12 h-12 text-blue-400 mb-2" />
+              <span className="text-blue-700 font-medium">
+                {previews.length === 0
+                  ? 'Drag & drop images here, or click to select'
+                  : `${previews.length} image(s) selected`}
+              </span>
+              {previews.length > 0 && (
+                <div className="grid grid-cols-4 gap-3 mt-4 w-full">
+                  {previews.map((src, i) => (
+                    <div key={i} className="relative group">
+                      <img
+                        src={src}
+                        alt="preview"
+                        className="h-20 w-20 object-cover rounded-lg border border-blue-200 shadow-sm transition-transform duration-200 group-hover:scale-105"
+                      />
                   <input
                     type="number"
                     min={1000}
@@ -252,25 +247,46 @@ function UploadSlidesPage(props: any) {
                     placeholder="Duration (ms)"
                     title="Duration in milliseconds"
                   />
-                  <button
-                    type="button"
-                    onClick={e => { e.stopPropagation(); handleRemovePreview(i); }}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-lg opacity-80 hover:opacity-100 text-xs"
-                    title="Remove"
-                  >
-                    &times;
-                  </button>
+                      <button
+                        type="button"
+                        onClick={e => { e.stopPropagation(); handleRemovePreview(i); }}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-lg opacity-80 hover:opacity-100 text-xs"
+                        title="Remove"
+                      >
+                        &times;
+                      </button>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
-        </label>
-      </form>
+              )}
+            </label>
+        {/* Upload button at the bottom */}
+        <div className="flex justify-end mt-8">
+          <button
+            type="submit"
+            className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-lg shadow transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            disabled={uploading}
+          >
+            {uploading ? 'Uploading...' : 'Upload'}
+          </button>
+        </div>
+        </form>
     </div>
   );
 }
 
 // --- MONITOR & MANAGE MODERNIZATION ---
+import { useCallback } from 'react';
+
+function formatTimeAgo(ts: number) {
+  if (!ts) return 'Never';
+  const diff = Math.floor((Date.now() - Number(ts)) / 1000);
+  if (diff < 60) return `${diff}s ago`;
+  if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
+  return new Date(ts).toLocaleString();
+}
+
 function useDisplayStatus() {
   const [status, setStatus] = useState<{id: string, online: boolean, lastSeen: number}[]>([]);
   useEffect(() => {
@@ -293,15 +309,18 @@ function MonitorManagePage() {
   const [reordering, setReordering] = useState(false);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [orderChanged, setOrderChanged] = useState(false);
+  const [showDeleteIdx, setShowDeleteIdx] = useState<number|null>(null);
+  const [toast, setToast] = useState<string|null>(null);
   const status = useDisplayStatus();
-  // Fetch slides for selected display
-  useEffect(() => {
-    if (!selectedDisp) return;
+  // Manual refresh
+  const refresh = useCallback(() => {
     setLoading(true);
     fetch(`/api/slides?disp=${selectedDisp}`)
       .then(res => res.json())
       .then(data => { setSlides(data || []); setLoading(false); });
   }, [selectedDisp]);
+  // Fetch slides for selected display
+  useEffect(() => { refresh(); }, [refresh]);
   // Synchronized slideshow index
   useEffect(() => {
     if (!slides.length) return;
@@ -322,10 +341,15 @@ function MonitorManagePage() {
     const interval = setInterval(updateIdx, 250);
     return () => clearInterval(interval);
   }, [slides]);
-  // Delete slide
-  const handleDelete = async (url: string) => {
+  // Delete slide with confirmation
+  const handleDelete = async (idx: number) => {
+    setShowDeleteIdx(idx);
+  };
+  const confirmDelete = async (idx: number) => {
+    const url = slides[idx].url;
     await fetch(`/api/slides?disp=${selectedDisp}&url=${encodeURIComponent(url)}`, { method: 'DELETE' });
-    setSlides(slides => slides.filter(s => s.url !== url));
+    setSlides(slides => slides.filter((_, i) => i !== idx));
+    setShowDeleteIdx(null);
   };
   // Drag-and-drop reordering
   const moveSlide = (from: number, to: number) => {
@@ -342,6 +366,8 @@ function MonitorManagePage() {
     await fetch(`/api/slides?disp=${selectedDisp}&order=${slides.map(s => s.id).join(',')}`, { method: 'PATCH' });
     setReordering(false);
     setOrderChanged(false);
+    setToast('Order saved!');
+    setTimeout(() => setToast(null), 2000);
   };
   // Drag-and-drop hooks
   const SlideItem = ({ slide, idx, move }: any) => {
@@ -360,16 +386,27 @@ function MonitorManagePage() {
     });
     drag(drop(ref));
     return (
-      <div ref={ref} className={`flex items-center gap-3 p-2 rounded-lg border transition-shadow duration-200 ${isDragging ? 'bg-blue-100 shadow-lg' : 'bg-white'} ${currentIdx === idx ? 'ring-2 ring-blue-500 shadow-md' : ''} group hover:bg-blue-50 cursor-pointer`}
-        style={{ opacity: isDragging ? 0.5 : 1 }}
+      <div ref={ref} className={`flex items-center gap-4 p-3 rounded-xl border transition-all duration-200 bg-white shadow-sm group hover:bg-blue-50 cursor-pointer relative ${isDragging ? 'scale-95 ring-2 ring-blue-300' : ''} ${currentIdx === idx ? 'ring-2 ring-blue-500 bg-blue-50 shadow-md' : ''}`}
+        style={{ opacity: isDragging ? 0.7 : 1 }}
         title={currentIdx === idx ? 'Currently showing' : undefined}
       >
-        <img src={slide.url} alt="slide" className="w-16 h-16 object-cover rounded border" />
-        <div className="flex-1">
+        <span className={`w-7 h-7 flex items-center justify-center rounded-full font-bold text-white text-xs mr-2 ${currentIdx === idx ? 'bg-blue-600' : 'bg-blue-300'}`}>{idx+1}</span>
+        <img src={slide.url} alt="slide" className="w-20 h-20 object-cover rounded border shadow group-hover:scale-105 transition-transform duration-200" />
+        <div className="flex-1 min-w-0">
           <div className="text-xs text-blue-900 font-semibold truncate max-w-xs">{slide.url.split('/').pop()}</div>
           <div className="text-xs text-blue-700">{((slide.duration || 10000) / 1000).toFixed(1)}s</div>
         </div>
-        <button onClick={() => handleDelete(slide.url)} className="px-2 py-1 bg-red-500 text-white rounded text-xs font-bold hover:bg-red-600 transition-colors" title="Delete slide">Delete</button>
+        <button onClick={() => handleDelete(idx)} className="px-2 py-1 bg-red-500 text-white rounded text-xs font-bold hover:bg-red-600 transition-colors" title="Delete slide">Delete</button>
+        {/* Delete confirmation dialog */}
+        {showDeleteIdx === idx && (
+          <div className="absolute z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white border border-red-300 rounded-xl shadow-lg p-4 flex flex-col items-center animate-fade-in">
+            <div className="text-red-600 font-bold mb-2">Delete this slide?</div>
+            <div className="flex gap-2">
+              <button className="px-3 py-1 bg-red-500 text-white rounded font-bold" onClick={() => confirmDelete(idx)}>Yes</button>
+              <button className="px-3 py-1 bg-gray-200 rounded font-bold" onClick={() => setShowDeleteIdx(null)}>No</button>
+            </div>
+          </div>
+        )}
       </div>
     );
   };
@@ -377,31 +414,39 @@ function MonitorManagePage() {
   const displayStatusMap = Object.fromEntries(status.map(s => [s.id, s]));
   return (
     <div className="bg-white/90 rounded-2xl shadow-lg p-6 border border-blue-100 mt-10">
-      <div className="mb-6">
-        <div className="grid grid-cols-4 gap-4 mb-2">
+      {toast && <Toast msg={toast} type="success" onClose={() => setToast(null)} />}
+      <div className="sticky top-20 z-10 bg-white/80 pb-2 mb-4 rounded-xl">
+        <div className="flex items-center justify-between mb-2">
+          <div className="font-bold text-blue-900 text-lg">Displays</div>
+          <button onClick={refresh} className="px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded font-bold text-sm shadow border border-blue-200" title="Refresh status/slides">Refresh</button>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {DISPLAY_IDS.map(id => {
             const s = displayStatusMap[id];
             const online = s?.online;
+            const lastSeen = s?.lastSeen;
+            const isSelected = selectedDisp === id;
             return (
               <button
                 key={id}
-                className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all duration-200 shadow-sm ${selectedDisp === id ? 'border-blue-500 bg-blue-50' : 'border-blue-200 bg-white hover:bg-blue-50'} ${online ? '' : 'opacity-60'}`}
+                className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all duration-200 shadow-sm group focus:ring-2 focus:ring-blue-400 ${isSelected ? 'border-blue-600 bg-blue-50' : 'border-blue-200 bg-white hover:bg-blue-50'} ${online ? '' : 'opacity-60'}`}
                 onClick={() => setSelectedDisp(id)}
-                title={online ? 'Online' : 'Offline'}
+                title={online ? `Online\nLast seen: ${formatTimeAgo(lastSeen)}` : `Offline\nLast seen: ${formatTimeAgo(lastSeen)}`}
               >
-                <span className="font-bold text-blue-900 mb-1">{id}</span>
-                <span className={`w-3 h-3 rounded-full mb-1 ${online ? 'bg-green-400' : 'bg-gray-300'} border border-white shadow`}></span>
-                <span className="text-xs text-blue-700/70">{online ? 'Online' : 'Offline'}</span>
-                {/* Show current slide preview */}
-                {selectedDisp === id && slides.length > 0 ? (
-                  <img src={slides[currentIdx]?.url} alt="Current slide" className="w-12 h-12 object-cover rounded mt-2 border" />
-                ) : null}
+                <span className="font-bold text-blue-900 mb-1 text-lg">{id}</span>
+                <span className={`w-4 h-4 rounded-full mb-1 ${online ? 'bg-green-400' : 'bg-gray-300'} border-2 border-white shadow`} title={online ? 'Online' : 'Offline'}></span>
+                <span className="text-xs text-blue-700/70 mb-1">{online ? 'Online' : 'Offline'}</span>
+                <span className="text-xs text-gray-400">{formatTimeAgo(lastSeen)}</span>
+                {/* Show current slide preview for each display */}
+                {isSelected && slides.length > 0 ? (
+                  <img src={slides[currentIdx]?.url} alt="Current slide" className="w-20 h-20 object-cover rounded mt-2 border shadow group-hover:scale-105 transition-transform duration-200" />
+                ) : <div className="w-20 h-20 bg-gray-100 rounded mt-2 flex items-center justify-center text-gray-300 text-xs">No slide</div>}
               </button>
             );
           })}
         </div>
       </div>
-      <div className="flex items-center gap-4 mb-4">
+      <div className="flex items-center gap-4 mb-4 mt-2">
         <label className="font-semibold text-blue-900">Monitor Display:</label>
         <select value={selectedDisp} onChange={e => setSelectedDisp(e.target.value)} className="border rounded px-2 py-1">
           {DISPLAY_IDS.map(id => <option key={id} value={id}>{id}</option>)}
@@ -412,7 +457,7 @@ function MonitorManagePage() {
       </div>
       {loading ? <Spinner /> : (
         <DndProvider backend={HTML5Backend}>
-          <div className="space-y-2">
+          <div className="space-y-3">
             {slides.map((slide, i) => (
               <SlideItem key={slide.id} slide={slide} idx={i} move={moveSlide} />
             ))}
