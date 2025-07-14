@@ -7,10 +7,11 @@ export async function getSlides(displayId: string) {
     .eq('display_id', displayId)
     .order('uploaded_at', { ascending: true });
   if (error) throw error;
-  return data || [];
+  // Map to camelCase for frontend compatibility
+  return (data || []).map(s => ({ url: s.url, uploadedAt: s.uploaded_at }));
 }
 
-export async function setSlides(displayId: string, slides: { url: string; uploadedAt: string }[]) {
+export async function setSlides(displayId: string, slides: { url: string; uploaded_at: string }[]) {
   // Remove old slides for this display
   await supabase.from('slides').delete().eq('display_id', displayId);
   // Insert new slides
@@ -18,7 +19,7 @@ export async function setSlides(displayId: string, slides: { url: string; upload
     const insertData = slides.map(s => ({
       display_id: displayId,
       url: s.url,
-      uploaded_at: s.uploadedAt,
+      uploaded_at: s.uploaded_at,
     }));
     await supabase.from('slides').insert(insertData);
   }

@@ -37,13 +37,13 @@ export default async function handler(
           console.log('Uploading', file.name, file.size);
           const url = await uploadImage(file);
           console.log('Uploaded', url);
-          slides.push({ url, uploadedAt: new Date().toISOString() });
+          slides.push({ url, uploaded_at: new Date().toISOString() });
           if (slides.length > 50) slides = slides.slice(-50);
         } catch (e) {
           console.error('Upload error:', e);
         }
       }
-      await setSlides(displayId, slides);
+      await setSlides(displayId, slides); // slides now uses { url, uploaded_at }
       await broadcast(displayId);
     }
     res.status(200).json({ ok: true });
