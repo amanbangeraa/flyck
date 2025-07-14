@@ -18,26 +18,34 @@ export default async function handler(
   const displays: string[] = [];
   bb.on('file', (_, file, info) => {
     const chunks: Buffer[] = [];
+    let duration: number | undefined;
     file.on('data', (d: Buffer) => chunks.push(d));
     file.on('end', () => {
       const buffer = Buffer.concat(chunks);
-      // Create a real File object for Vercel Blob SDK compatibility
+      // Attach duration if available
       const fileObj = new File([buffer], info.filename, { type: info.mimeType });
+      (fileObj as any).duration = duration;
       files.push(fileObj);
     });
   });
   bb.on('field', (name, val) => {
     if (name === 'displays') displays.push(val);
+    if (name.startsWith('duration:')) {
+      // duration:<filename> = value
+      const filename = name.split(':')[1];
+      const file = files.find(f => (f as any).name === filename);
+      if (file) (file as any).duration = parseInt(val, 10);
+    }
   });
   bb.on('finish', async () => {
     for (const displayId of displays) {
-      let slides = (await getSlides(displayId)).map(s => ({ url: s.url, uploaded_at: s.uploadedAt }));
+      let slides = (await getSlides(displayId)).map(s => ({ url: s.url, uploaded_at: s.uploadedAt, duration: s.duration ?? 10000 }));
       for (const file of files) {
         try {
           console.log('Uploading', file.name, file.size);
           const url = await uploadImage(file);
           console.log('Uploaded', url);
-          slides.push({ url, uploaded_at: new Date().toISOString() });
+          slides.push({ url, uploaded_at: new Date().toISOString(), duration: (file as any).duration ?? 10000 });
           if (slides.length > 50) slides = slides.slice(-50);
         } catch (e) {
           console.error('Upload error:', e);

@@ -3,15 +3,15 @@ import { supabase } from './supabase';
 export async function getSlides(displayId: string) {
   const { data, error } = await supabase
     .from('slides')
-    .select('url, uploaded_at')
+    .select('url, uploaded_at, duration')
     .eq('display_id', displayId)
     .order('uploaded_at', { ascending: true });
   if (error) throw error;
   // Map to camelCase for frontend compatibility
-  return (data || []).map(s => ({ url: s.url, uploadedAt: s.uploaded_at }));
+  return (data || []).map(s => ({ url: s.url, uploadedAt: s.uploaded_at, duration: s.duration ?? 10000 }));
 }
 
-export async function setSlides(displayId: string, slides: { url: string; uploaded_at: string }[]) {
+export async function setSlides(displayId: string, slides: { url: string; uploaded_at: string; duration?: number }[]) {
   // Remove old slides for this display
   await supabase.from('slides').delete().eq('display_id', displayId);
   // Insert new slides
@@ -20,6 +20,7 @@ export async function setSlides(displayId: string, slides: { url: string; upload
       display_id: displayId,
       url: s.url,
       uploaded_at: s.uploaded_at,
+      duration: s.duration ?? 10000,
     }));
     await supabase.from('slides').insert(insertData);
   }

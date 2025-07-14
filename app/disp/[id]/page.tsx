@@ -48,11 +48,11 @@ export default function Slideshow({ params }: { params: { id: string } }) {
     setIdx(0);
     timer.current = setInterval(() => {
       setIdx((i) => (i + 1) % slides.length);
-    }, 10000);
+    }, slides[idx]?.duration || 10000);
     return () => {
       timer.current && clearInterval(timer.current);
     };
-  }, [slides]);
+  }, [slides, idx]);
 
   useEffect(() => {
     const es = new EventSource(`/api/stream?disp=${id}`);
@@ -99,8 +99,6 @@ export default function Slideshow({ params }: { params: { id: string } }) {
         onError={() => setLoading(false)}
       />
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-black/60 text-white px-5 py-2 rounded-full text-lg font-semibold shadow-lg flex items-center gap-4">
-        <span>Slide {idx + 1} / {slides.length}</span>
-        <span className="text-xs text-blue-200">{new Date(slides[idx].uploadedAt).toLocaleString()}</span>
       </div>
     </div>
   );

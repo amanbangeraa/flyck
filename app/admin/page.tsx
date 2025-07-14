@@ -52,6 +52,7 @@ export default function AdminPage() {
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [previews, setPreviews] = useState<string[]>([]);
+  const [durations, setDurations] = useState<number[]>([]);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && localStorage.getItem('isLoggedIn') !== 'true') {
@@ -73,6 +74,11 @@ export default function AdminPage() {
   const handleFiles = (files: FileList | null) => {
     if (!files) return;
     setPreviews(Array.from(files).map((file) => URL.createObjectURL(file)));
+    setDurations(Array.from(files).map(() => 10000)); // default 10s
+  };
+
+  const handleDurationChange = (idx: number, value: number) => {
+    setDurations((prev) => prev.map((d, i) => (i === idx ? value : d)));
   };
 
   const handleRemovePreview = (idx: number) => {
@@ -95,9 +101,10 @@ export default function AdminPage() {
     setUploading(true);
     setToast(null);
     const formData = new FormData();
-    Array.from(fileRef.current.files).forEach((f) =>
-      formData.append('files', f)
-    );
+    Array.from(fileRef.current.files).forEach((f, i) => {
+      formData.append('files', f);
+      formData.append(`duration:${f.name}`, durations[i].toString());
+    });
     selected.forEach((id) => formData.append('displays', id));
     try {
       await uploadSlides(formData);
@@ -191,6 +198,16 @@ export default function AdminPage() {
                         src={src}
                         alt="preview"
                         className="h-20 w-20 object-cover rounded-lg border border-blue-200 shadow-sm transition-transform duration-200 group-hover:scale-105"
+                      />
+                      <input
+                        type="number"
+                        min={1000}
+                        step={1000}
+                        value={durations[i]}
+                        onChange={e => handleDurationChange(i, parseInt(e.target.value, 10))}
+                        className="mt-2 w-full text-xs border rounded px-1 py-0.5"
+                        placeholder="Duration (ms)"
+                        title="Duration in milliseconds"
                       />
                       <button
                         type="button"
