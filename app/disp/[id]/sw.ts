@@ -1,3 +1,5 @@
+/// <reference lib="webworker" />
+
 const CACHE_NAME = 'flyck-cache-v1';
 const SHELL = [
   '/',
@@ -5,7 +7,7 @@ const SHELL = [
   '/styles/globals.css',
 ];
 
-self.addEventListener('install', (e) => {
+self.addEventListener('install', (e: ExtendableEvent) => {
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL))
   );
