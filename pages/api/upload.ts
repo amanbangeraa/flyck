@@ -2,7 +2,6 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { uploadImage } from '../../lib/blob';
 import { getSlides, setSlides } from '../../lib/kv';
 import { broadcast } from '../../lib/sse';
-import { File } from 'fetch-blob';
 
 export const config = {
   api: { bodyParser: false },
