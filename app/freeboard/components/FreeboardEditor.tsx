@@ -137,7 +137,6 @@ const FreeboardEditor: React.FC<FreeboardEditorProps> = ({ displayId }) => {
           onChange={handleChange}
           theme="light"
           UIOptions={{ canvasActions: { export: false } }}
-          style={{ height: "100%", width: "100%" }}
           onReady={(api: any) => {
             excalidrawRef.current = api;
             setExcalidrawAPI(api);
