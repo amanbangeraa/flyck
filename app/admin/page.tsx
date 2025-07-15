@@ -71,6 +71,15 @@ function Menu({ page, setPage, onLogout }: { page: string; setPage: (p: string) 
         >
           Monitor & Manage
         </button>
+        {/* Freeboard Link */}
+        <a
+          href="/freeboard"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-bold text-lg px-4 py-2 rounded transition-colors text-blue-700 hover:bg-blue-100 ml-2"
+        >
+          Freeboard
+        </a>
       </div>
       <button
         className="ml-auto px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-lg transition-colors border border-red-200 shadow-sm"
@@ -184,6 +193,23 @@ function UploadSlidesPage(props: any) {
 
   return (
     <div className="bg-white/90 rounded-2xl shadow-lg p-6 border border-blue-100 mt-10">
+      {/* Display selection UI restored */}
+      <div className="mb-8">
+        <label className="block font-medium text-blue-900 text-base mb-2">Select Displays</label>
+        <div className="flex flex-wrap gap-4">
+          {DISPLAY_IDS.map((id) => (
+            <label key={id} className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-colors ${selected.includes(id) ? 'bg-blue-100 border-blue-400' : 'bg-white border-blue-200 hover:bg-blue-50'}`}>
+              <input
+                type="checkbox"
+                checked={selected.includes(id)}
+                onChange={() => handleSelect(id)}
+                className="accent-blue-600"
+              />
+              <span className="font-mono text-blue-900">{id}</span>
+            </label>
+          ))}
+        </div>
+      </div>
       {/* Monitor Display dropdown removed */}
       <form className="space-y-12 bg-white/90 p-10 rounded-3xl shadow-2xl border border-blue-100" onSubmit={handleUpload}>
         <h2 className="text-xl font-bold text-blue-900 mb-6">Upload Slides</h2>
