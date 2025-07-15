@@ -10,7 +10,7 @@ function Spinner() {
   );
 }
 
-function useSlides(id: string) {
+function useSlides(id: string, setIdx: (idx: number) => void) {
   const [slides, setSlides] = useState<{ url: string; uploadedAt: string; duration?: number }[]>([]);
   // Expose a refetch function
   const fetchSlides = async () => {
@@ -18,6 +18,7 @@ function useSlides(id: string) {
     if (!res.ok) return;
     const data = await res.json();
     setSlides(data);
+    setIdx(0); // Always reset index after fetching new slides
   };
   useEffect(() => {
     let ignore = false;
@@ -25,13 +26,16 @@ function useSlides(id: string) {
       const res = await fetch(`/api/disp?id=${id}`);
       if (!res.ok) return;
       const data = await res.json();
-      if (!ignore) setSlides(data);
+      if (!ignore) {
+        setSlides(data);
+        setIdx(0); // Always reset index after initial fetch
+      }
     }
     initialFetch();
     return () => {
       ignore = true;
     };
-  }, [id]);
+  }, [id, setIdx]);
   return { slides, fetchSlides };
 }
 
@@ -54,15 +58,19 @@ function getCurrentSlideIdx(slides: { duration?: number }[]) {
 
 export default function Slideshow({ params }: { params: { id: string } }) {
   const { id } = params;
-  const { slides, fetchSlides } = useSlides(id);
   const [idx, setIdx] = useState(0);
+  const { slides, fetchSlides } = useSlides(id, setIdx);
   const [loading, setLoading] = useState(true);
   const timer = useRef<NodeJS.Timeout | null>(null);
 
   // Synchronized slideshow logic
   useEffect(() => {
     if (!slides.length) return;
-    const updateIdx = () => setIdx(getCurrentSlideIdx(slides));
+    const updateIdx = () => setIdx((prevIdx) => {
+      // Ensure idx is always in bounds
+      if (prevIdx >= slides.length) return 0;
+      return getCurrentSlideIdx(slides);
+    });
     updateIdx();
     const interval = setInterval(updateIdx, 250); // update 4x/sec for smoothness
     return () => clearInterval(interval);
@@ -106,19 +114,22 @@ export default function Slideshow({ params }: { params: { id: string } }) {
       </div>
     );
 
+  // Always use a safe index
+  const safeIdx = Math.min(idx, slides.length - 1);
+
   return (
     <div className="relative w-screen h-screen bg-black flex items-center justify-center overflow-hidden">
       {loading && <Spinner />}
       <img
-        key={slides[idx].url}
-        src={slides[idx].url}
+        key={slides[safeIdx].url}
+        src={slides[safeIdx].url}
         className={`w-screen h-screen object-contain transition-opacity duration-700 ${loading ? 'opacity-0' : 'opacity-100'}`}
-        alt={`Slide ${idx + 1}`}
+        alt={`Slide ${safeIdx + 1}`}
         onLoad={() => setLoading(false)}
         onError={() => setLoading(false)}
       />
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-black/60 text-white px-5 py-2 rounded-full text-lg font-semibold shadow-lg flex items-center gap-4">
-        <span className="text-xs text-blue-200">{((slides[idx]?.duration || 10000) / 1000).toFixed(1)}s</span>
+        <span className="text-xs text-blue-200">{((slides[safeIdx]?.duration || 10000) / 1000).toFixed(1)}s</span>
       </div>
     </div>
   );
