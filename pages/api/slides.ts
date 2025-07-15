@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { supabase } from '../../lib/supabase';
+import { broadcast } from '../../lib/sse';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { disp, url, order } = req.query;
@@ -24,6 +25,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const path = url.split('/').slice(-1)[0];
     await supabase.storage.from('slides').remove([path]);
     if (error) return res.status(500).json({ error: error.message });
+    await broadcast(disp); // Notify clients to update
     return res.status(200).json({ ok: true });
   }
 
