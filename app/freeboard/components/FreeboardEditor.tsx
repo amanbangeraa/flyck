@@ -28,6 +28,10 @@ const FreeboardEditor: React.FC<FreeboardEditorProps> = ({ displayId }) => {
     if (saved && excalidrawAPI) {
       try {
         const data = JSON.parse(saved);
+        // Remove collaborators before loading
+        if (data.appState && data.appState.collaborators) {
+          delete data.appState.collaborators;
+        }
         excalidrawAPI.updateScene(data);
       } catch {}
     }
@@ -65,6 +69,10 @@ const FreeboardEditor: React.FC<FreeboardEditorProps> = ({ displayId }) => {
     if (!excalidrawAPI) return;
     const elements = excalidrawAPI.getSceneElements();
     const appState = excalidrawAPI.getAppState();
+    // Remove collaborators before saving
+    if (appState && appState.collaborators) {
+      delete appState.collaborators;
+    }
     const files = excalidrawAPI.getFiles ? excalidrawAPI.getFiles() : undefined;
     const data = { elements, appState, files };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
@@ -82,6 +90,10 @@ const FreeboardEditor: React.FC<FreeboardEditorProps> = ({ displayId }) => {
     reader.onload = (e) => {
       try {
         const data = JSON.parse(e.target?.result as string);
+        // Remove collaborators before loading
+        if (data.appState && data.appState.collaborators) {
+          delete data.appState.collaborators;
+        }
         excalidrawAPI?.updateScene(data);
       } catch {
         alert("Invalid Excalidraw JSON file.");
