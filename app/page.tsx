@@ -44,6 +44,7 @@ export default function LoginPage() {
         className="bg-white/80 p-6 rounded-xl shadow-md w-full max-w-xs space-y-6 animate-fade-in"
       >
         <FlyckIcon />
+        <div className="text-xs text-gray-400 font-light text-center mb-2">From dept. of ECE</div>
         <h1 className="text-xl font-semibold text-blue-900 text-center mb-2 tracking-tight">Sign in to Flyck</h1>
         <div>
           <label className="block text-blue-900 text-xs font-medium mb-1" htmlFor="username">Username</label>

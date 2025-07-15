@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
+import Sidebar from './components/Sidebar';
+import Header from './components/Header';
 
 function CloudArrowUpIcon(props: any) {
   return (
@@ -71,15 +73,6 @@ function Menu({ page, setPage, onLogout }: { page: string; setPage: (p: string) 
         >
           Monitor & Manage
         </button>
-        {/* Freeboard Link */}
-        <a
-          href="/freeboard"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-bold text-lg px-4 py-2 rounded transition-colors text-blue-700 hover:bg-blue-100 ml-2"
-        >
-          Freeboard
-        </a>
       </div>
       <button
         className="ml-auto px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-lg transition-colors border border-red-200 shadow-sm"
@@ -511,11 +504,14 @@ export default function AdminPanel() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100">
-      <Menu page={page} setPage={setPage} onLogout={handleLogout} />
-      <main className="max-w-3xl mx-auto px-4 py-10">
-        {page === 'upload' ? <UploadSlidesPage router={router} /> : <MonitorManagePage />}
-      </main>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100 flex">
+      <Sidebar page={page} setPage={setPage} />
+      <div className="flex-1 flex flex-col min-h-screen ml-20">
+        <Header onLogout={handleLogout} />
+        <main className="flex-1 flex flex-col items-center px-4 py-10">
+          {page === 'upload' ? <UploadSlidesPage router={router} /> : <MonitorManagePage />}
+        </main>
+      </div>
     </div>
   );
 } 
