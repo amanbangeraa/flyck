@@ -134,14 +134,14 @@ const FreeboardEditor: React.FC<FreeboardEditorProps> = ({ displayId }) => {
       {/* Excalidraw Canvas */}
       <div className="flex-1 min-h-0 min-w-0 relative">
         <Excalidraw
-          ref={(api: any) => {
-            excalidrawRef.current = api;
-            setExcalidrawAPI(api);
-          }}
           onChange={handleChange}
           theme="light"
           UIOptions={{ canvasActions: { export: false } }}
           style={{ height: "100%", width: "100%" }}
+          onReady={(api: any) => {
+            excalidrawRef.current = api;
+            setExcalidrawAPI(api);
+          }}
         />
         {/* Toast/Modal */}
         {showToast && (
